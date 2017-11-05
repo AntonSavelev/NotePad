@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Quick Notes</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_save">Save</string>
+    <string name="action_clear">Clear</string>
+    <string name="delete">Delete</string>
+</resources>
