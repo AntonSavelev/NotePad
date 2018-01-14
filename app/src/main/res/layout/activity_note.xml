@@ -1,27 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.example.notepad.controller.NoteActivity">
 
-
-    <EditText
-        android:id="@+id/et_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:hint="Title"
-        android:inputType="text" />
-
-    <EditText
-        android:id="@+id/et_content"
+    <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/et_title"
-        android:gravity="top|left"
-        android:hint="Text"
-        android:inputType="textMultiLine" />
-</RelativeLayout>
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_margin="10dp"
+            android:id="@+id/linerLayout">
+
+            <EditText
+                android:id="@+id/et_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Title"
+                android:inputType="text" />
+
+            <EditText
+                android:id="@+id/et_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Text"
+                android:inputType="textMultiLine" />
+
+            <ImageView
+                android:id="@+id/mImageView1"
+                android:layout_width="300px"
+                android:layout_height="300px"
+                android:background="#fa2255"
+                android:visibility="gone"
+                android:onClick="openImage"
+                android:src="@drawable/ic_photo_camera_black_24dp" />
+
+            <ImageView
+                android:id="@+id/mImageView2"
+                android:layout_width="300px"
+                android:layout_height="300px"
+                android:layout_marginTop="10dp"
+                android:background="#fa2255"
+                android:visibility="gone"
+                android:onClick="openImage"
+                android:src="@drawable/ic_photo_camera_black_24dp" />
+
+            <ImageView
+                android:id="@+id/mImageView3"
+                android:layout_width="300px"
+                android:layout_height="300px"
+                android:layout_marginTop="10dp"
+                android:background="#fa2255"
+                android:visibility="gone"
+                android:onClick="openImage"
+                android:src="@drawable/ic_photo_camera_black_24dp" />
+
+            <ImageView
+                android:id="@+id/mImageView4"
+                android:layout_width="300px"
+                android:layout_height="300px"
+                android:layout_marginTop="10dp"
+                android:background="#fa2255"
+                android:visibility="gone"
+                android:onClick="openImage"
+                android:src="@drawable/ic_photo_camera_black_24dp"
+                />
+
+            <ImageView
+                android:id="@+id/mImageView5"
+                android:layout_width="300px"
+                android:layout_height="300px"
+                android:visibility="gone"
+                android:layout_marginTop="10dp"
+                android:background="#fa2255"
+                android:onClick="openImage"
+                android:src="@drawable/ic_photo_camera_black_24dp" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_test"
+                android:text="Test_uCrop"
+                android:onClick="uCropClick"/>
+
+        </LinearLayout>
+    </android.support.v4.widget.NestedScrollView>
+
+</LinearLayout>

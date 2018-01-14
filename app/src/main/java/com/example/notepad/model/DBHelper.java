@@ -14,6 +14,11 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String TITLE = "title";
     public static final String CONTENT = "content";
     public static final String DATE = "date";
+    public static final String PATH_URI_1 = "uri_1";
+    public static final String PATH_URI_2 = "uri_2";
+    public static final String PATH_URI_3 = "uri_3";
+    public static final String PATH_URI_4 = "uri_4";
+    public static final String PATH_URI_5 = "uri_5";
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -22,7 +27,8 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         sqLiteDatabase.execSQL("create table " + TABLE_NOTES + "(" + KEY_ID
-                + " integer primary key autoincrement," + TITLE + " text," + CONTENT + " text," + DATE + " text" + ")");
+                + " integer primary key autoincrement," + TITLE + " text," + CONTENT + " text," + DATE + " text," + PATH_URI_1 + " text," + PATH_URI_2 + " text,"
+                + PATH_URI_3 + " text," + PATH_URI_4 + " text," + PATH_URI_5 + " text" +")");
     }
 
     @Override
