@@ -49,6 +49,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     }
 
     @Override
+    public int getItemViewType(int position) {
+        return super.getItemViewType(position);
+    }
+
+    @Override
     public int getItemCount() {
         return notes.size();
     }
@@ -78,9 +83,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
 
         public void bind(Note note) {
             noteName.setText(note.getTitle());
-            noteContent.setText(note.getContent());
-            noteDate.setText(note.getDate());
+            noteDate.setText(note.getTime());
         }
-
     }
 }

@@ -4,7 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.notepad.controller.NoteActivity">
+    android:layout_margin="4dp"
+    tools:context="com.example.notepad.controller.NoteActivity"
+    android:background="@drawable/background">
 
     <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -15,7 +17,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:layout_margin="10dp"
             android:id="@+id/linerLayout">
 
             <EditText
@@ -25,69 +26,12 @@
                 android:hint="Title"
                 android:inputType="text" />
 
-            <EditText
-                android:id="@+id/et_content"
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/note_view"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Text"
-                android:inputType="textMultiLine" />
-
-            <ImageView
-                android:id="@+id/mImageView1"
-                android:layout_width="300px"
-                android:layout_height="300px"
-                android:background="#fa2255"
-                android:visibility="gone"
-                android:onClick="openImage"
-                android:src="@drawable/ic_photo_camera_black_24dp" />
-
-            <ImageView
-                android:id="@+id/mImageView2"
-                android:layout_width="300px"
-                android:layout_height="300px"
-                android:layout_marginTop="10dp"
-                android:background="#fa2255"
-                android:visibility="gone"
-                android:onClick="openImage"
-                android:src="@drawable/ic_photo_camera_black_24dp" />
-
-            <ImageView
-                android:id="@+id/mImageView3"
-                android:layout_width="300px"
-                android:layout_height="300px"
-                android:layout_marginTop="10dp"
-                android:background="#fa2255"
-                android:visibility="gone"
-                android:onClick="openImage"
-                android:src="@drawable/ic_photo_camera_black_24dp" />
-
-            <ImageView
-                android:id="@+id/mImageView4"
-                android:layout_width="300px"
-                android:layout_height="300px"
-                android:layout_marginTop="10dp"
-                android:background="#fa2255"
-                android:visibility="gone"
-                android:onClick="openImage"
-                android:src="@drawable/ic_photo_camera_black_24dp"
-                />
-
-            <ImageView
-                android:id="@+id/mImageView5"
-                android:layout_width="300px"
-                android:layout_height="300px"
-                android:visibility="gone"
-                android:layout_marginTop="10dp"
-                android:background="#fa2255"
-                android:onClick="openImage"
-                android:src="@drawable/ic_photo_camera_black_24dp" />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/btn_test"
-                android:text="Test_uCrop"
-                android:onClick="uCropClick"/>
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true" />
 
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -27,10 +28,10 @@ public class NoteListActivity extends AppCompatActivity implements LoadListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_list);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.r_view);
+        RecyclerView recyclerView = findViewById(R.id.r_view);
         final GridLayoutManager layoutManager = new GridLayoutManager(NoteListActivity.this, 1);
         recyclerView.setLayoutManager(layoutManager);
         adapter = new MyAdapter();
@@ -41,8 +42,9 @@ public class NoteListActivity extends AppCompatActivity implements LoadListener 
             }
         });
         recyclerView.setAdapter(adapter);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

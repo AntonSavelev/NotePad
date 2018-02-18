@@ -4,7 +4,7 @@ import android.app.Application;
 
 import com.example.notepad.model.DBHelper;
 import com.example.notepad.utils.Loader;
-import com.example.notepad.utils.PeopleDbHelper;
+import com.example.notepad.utils.NoteDbHelper;
 
 public class App extends Application {
     private static App instance;
@@ -13,8 +13,8 @@ public class App extends Application {
     public synchronized static Loader getLoader() {
         if (loader == null) {
             DBHelper dbHelper = new DBHelper(instance);
-            PeopleDbHelper peopleDbHelper = new PeopleDbHelper(dbHelper);
-            loader = new Loader(peopleDbHelper);
+            NoteDbHelper noteDbHelper = new NoteDbHelper(dbHelper);
+            loader = new Loader(noteDbHelper);
         }
         return loader;
     }
