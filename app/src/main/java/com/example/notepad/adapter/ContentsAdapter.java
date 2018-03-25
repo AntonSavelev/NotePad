@@ -21,7 +21,7 @@ public class ContentsAdapter extends RecyclerView.Adapter {
 
     public static final int TYPE_IMAGE = 0;
     public static final int TYPE_EDIT_TEXT = 1;
-    
+
     Listener listener;
     private List<String> contents;
 
@@ -73,7 +73,7 @@ public class ContentsAdapter extends RecyclerView.Adapter {
     public void setData(List<String> contents) {
         this.contents = contents;
 
-        if(getItemCount() == 0){
+        if (getItemCount() == 0) {
             contents.add("");
         }
 
@@ -95,7 +95,7 @@ public class ContentsAdapter extends RecyclerView.Adapter {
 
         }
 
-        public void bind(RecyclerView.ViewHolder holder, final int position){
+        public void bind(RecyclerView.ViewHolder holder, final int position) {
             Uri uri = Uri.parse(contents.get(position));
             ((ImageViewHolder) holder).image.setImageURI(uri);
             CardView cardView = (CardView) holder.itemView;
@@ -121,14 +121,14 @@ public class ContentsAdapter extends RecyclerView.Adapter {
             eText.addTextChangedListener(myCustomEditTextListener);
         }
 
-        public void bind(RecyclerView.ViewHolder holder, final int position){
+        public void bind(RecyclerView.ViewHolder holder, final int position) {
             String content = contents.get(position);
             ((EditTextViewHolder) holder).eText.setText(content);
             ((EditTextViewHolder) holder).eText.requestFocus();
         }
     }
 
-    private class MyCustomEditTextListener implements TextWatcher{
+    private class MyCustomEditTextListener implements TextWatcher {
 
         private int position;
 

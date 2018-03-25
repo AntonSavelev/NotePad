@@ -62,7 +62,7 @@ public class NoteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         initialization();
-        if(savedInstanceState != null){
+        if (savedInstanceState != null) {
             contents = savedInstanceState.getStringArrayList(KEY_SAVE_CONTENTS);
         }
         if (isIntentHasExtra()) {
@@ -96,13 +96,6 @@ public class NoteActivity extends AppCompatActivity {
         contents = new ArrayList<>();
     }
 
-//    public void getNote() {
-//        int id = getNoteId();
-//        Note note = noteDao.getById(id);
-//        etTitle.setText(note.getTitle());
-//        contents.addAll(note.getContents());
-//    }
-
     public void getNote() {
         final int id = getNoteId();
         new Thread(new Runnable() {
@@ -131,8 +124,6 @@ public class NoteActivity extends AppCompatActivity {
     }
 
     public boolean isNoteEdit() {
-        int id = getNoteId();
-//        Note note = noteDao.getById(id);
         String savedTitle = note.getTitle();
         List<String> savedListContents = note.getContents();
         String title = etTitle.getText().toString();
@@ -245,7 +236,7 @@ public class NoteActivity extends AppCompatActivity {
         return lastContent;
     }
 
-    public void insertNote(final Note note){
+    public void insertNote(final Note note) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -255,7 +246,7 @@ public class NoteActivity extends AppCompatActivity {
         makeText(this, "Заметка успешно сохранена", LENGTH_SHORT).show();
     }
 
-    public void updateNote(final Note note){
+    public void updateNote(final Note note) {
         note.setId(getNoteId());
         new Thread(new Runnable() {
             @Override

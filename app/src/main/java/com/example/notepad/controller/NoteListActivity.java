@@ -14,6 +14,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+import com.example.notepad.managers.App;
 import com.example.notepad.model.AppDatabase;
 import com.example.notepad.model.NoteDao;
 import com.example.notepad.model.Note;
@@ -25,7 +26,7 @@ import java.util.List;
 public class NoteListActivity extends AppCompatActivity {
 
     MyAdapter adapter;
-
+    AppDatabase db = App.getInstance().getDatabase();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +69,6 @@ public class NoteListActivity extends AppCompatActivity {
     }
 
     public void setDataInAdapter() {
-        AppDatabase db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "database").allowMainThreadQueries().build();
         NoteDao noteDao = db.noteDao();
         LiveData<List<Note>> notesLiveData = noteDao.getAll();
         notesLiveData.observe(this, new Observer<List<Note>>() {

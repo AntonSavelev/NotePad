@@ -9,12 +9,12 @@ import java.util.stream.Collectors;
 public class ContentsConverter {
 
     @TypeConverter
-    public String fromContents(List<String> contents){
+    public String fromContents(List<String> contents) {
         return contents.stream().collect(Collectors.joining(","));
     }
 
     @TypeConverter
-    public List<String> toContents(String data){
+    public List<String> toContents(String data) {
         return Arrays.asList(data.split(","));
     }
 }
