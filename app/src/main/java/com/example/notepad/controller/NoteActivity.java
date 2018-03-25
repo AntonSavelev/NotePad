@@ -4,12 +4,12 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -19,14 +19,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.support.v7.widget.ShareActionProvider;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.example.notepad.model.AppDatabase;
+import com.example.notepad.model.NoteDao;
 import com.example.notepad.adapter.ContentsAdapter;
-import com.example.notepad.model.DBHelper;
+import com.example.notepad.managers.App;
 import com.example.notepad.model.Note;
 import com.example.notepad.R;
-import com.example.notepad.utils.NoteDbHelper;
 import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
@@ -41,9 +41,11 @@ import static android.widget.Toast.*;
 public class NoteActivity extends AppCompatActivity {
 
     public static final String KEY_NOTE_ID = "key_id";
+    public static final String KEY_SAVE_CONTENTS = "key_save_contents";
+    public static final String BLANC_ENTRY = "";
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    private NoteDao noteDao;
     private List<String> contents;
-    private DBHelper dbHelper;
-    private NoteDbHelper noteDbHelper;
     private String content;
     private ContentsAdapter contentsAdapter;
     private RecyclerView rv;
@@ -52,24 +54,33 @@ public class NoteActivity extends AppCompatActivity {
     private Uri destinationUri;
     private ShareActionProvider myShareActionProvider;
     private GridLayoutManager layoutManager;
+    private AppDatabase db;
+    private Note note;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         initialization();
+        if(savedInstanceState != null){
+            contents = savedInstanceState.getStringArrayList(KEY_SAVE_CONTENTS);
+        }
         if (isIntentHasExtra()) {
             getNote();
-        } else {
-            contents.add("");
         }
         contentsAdapter.setData(contents);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putStringArrayList(KEY_SAVE_CONTENTS, (ArrayList<String>) contents);
+    }
+
     public void initialization() {
         etTitle = findViewById(R.id.et_title);
-        dbHelper = new DBHelper(this);
-        noteDbHelper = new NoteDbHelper(dbHelper);
+        db = App.getInstance().getDatabase();
+        noteDao = db.noteDao();
         rv = findViewById(R.id.note_view);
         layoutManager = new GridLayoutManager(NoteActivity.this, 1);
         rv.setLayoutManager(layoutManager);
@@ -85,11 +96,29 @@ public class NoteActivity extends AppCompatActivity {
         contents = new ArrayList<>();
     }
 
+//    public void getNote() {
+//        int id = getNoteId();
+//        Note note = noteDao.getById(id);
+//        etTitle.setText(note.getTitle());
+//        contents.addAll(note.getContents());
+//    }
+
     public void getNote() {
-        int id = getNoteId();
-        Note note = noteDbHelper.getNote(id);
-        etTitle.setText(note.getTitle());
-        contents = note.getContents();
+        final int id = getNoteId();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                note = noteDao.getById(id);
+                contents.clear();
+                contents.addAll(note.getContents());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        etTitle.setText(note.getTitle());
+                    }
+                });
+            }
+        }).start();
     }
 
     public boolean isIntentHasExtra() {
@@ -103,7 +132,7 @@ public class NoteActivity extends AppCompatActivity {
 
     public boolean isNoteEdit() {
         int id = getNoteId();
-        Note note = noteDbHelper.getNote(id);
+//        Note note = noteDao.getById(id);
         String savedTitle = note.getTitle();
         List<String> savedListContents = note.getContents();
         String title = etTitle.getText().toString();
@@ -129,10 +158,13 @@ public class NoteActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_note, menu);
         MenuItem deleteItem = menu.findItem(R.id.delete);
+        MenuItem clearItem = menu.findItem(R.id.clear);
 //        MenuItem shareItem = menu.findItem(R.id.action_share);
         if (!isIntentHasExtra()) {
             deleteItem.setVisible(false);
 //            shareItem.setVisible(false);
+        } else {
+            clearItem.setVisible(false);
         }
 //        myShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
         return true;
@@ -179,57 +211,75 @@ public class NoteActivity extends AppCompatActivity {
                 Uri photoURI = FileProvider.getUriForFile(this,
                         "com.example.android.fileprovider",
                         photoFile);
-                UCrop.of(sourceUri, destinationUri)
-                        .withAspectRatio(16, 9)
-                        .withMaxResultSize(1920, 1080)
-                        .start(this, UCrop.REQUEST_CROP);
-                contents.add(content);
-                contents.add("");
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, UCrop.REQUEST_CROP);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == UCrop.REQUEST_CROP && resultCode == RESULT_OK) {
-            contentsAdapter.notifyDataSetChanged();
-            invalidateOptionsMenu();
+        if (requestCode == REQUEST_IMAGE_CAPTURE) {
+            if (resultCode == RESULT_OK) {
+                UCrop.of(sourceUri, destinationUri)
+                        .withAspectRatio(16, 9)
+                        .withMaxResultSize(1920, 1080)
+                        .start(this, UCrop.REQUEST_CROP);
+            }
+        }
+        if (requestCode == UCrop.REQUEST_CROP) {
+            if (resultCode == RESULT_OK) {
+                int size = contents.size();
+                if (size > 0 && contents.get(size - 1).equals("")) {
+                    contents.remove(contents.size() - 1);
+                }
+                contents.add(content);
+                contentsAdapter.notifyDataSetChanged();
+            }
         }
     }
 
     public String getContent(int contentIndex) {
-        LinearLayout linearLayout = (LinearLayout) rv.getChildAt(contentIndex);
-        EditText editText = linearLayout.findViewById(R.id.eText);
+        EditText editText = rv.getChildAt(contentIndex).findViewById(R.id.eText);
         String lastContent = editText.getText().toString();
         return lastContent;
+    }
+
+    public void insertNote(final Note note){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                noteDao.insert(note);
+            }
+        }).start();
+        makeText(this, "Заметка успешно сохранена", LENGTH_SHORT).show();
+    }
+
+    public void updateNote(final Note note){
+        note.setId(getNoteId());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                noteDao.update(note);
+            }
+        }).start();
+        makeText(this, "Заметка отредактирована", LENGTH_SHORT).show();
     }
 
     public void saveNote() {
         if (isFieldsEmpty()) {
             return;
         }
-        int id = getNoteId();
         String title = etTitle.getText().toString();
-        int amountContent = contents.size();
-        for (int i = 0; i < amountContent; i++) {
-            if (!contents.get(i).contains("jpg")) {
-                String content = getContent(i);
-                contents.set(i, content);
-            }
-        }
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
         String currentDateAndTime = sdf.format(new Date());
-        Note note = new Note(title, contents, currentDateAndTime);
+        final Note note = new Note(title, contents, currentDateAndTime);
         if (isIntentHasExtra()) {
             if (isNoteEdit()) {
-                noteDbHelper.editNote(id, note);
-                makeText(this, "Заметка отредактирована", LENGTH_SHORT).show();
+                updateNote(note);
             }
         } else {
-            noteDbHelper.saveNote(note);
-            makeText(this, "Заметка успешно сохранена", LENGTH_SHORT).show();
+            insertNote(note);
         }
         finish();
     }
@@ -237,14 +287,6 @@ public class NoteActivity extends AppCompatActivity {
     public void checkPermissionAndGetPhoto() {
         int permissionStatus = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
         if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
-            int lastContentIndex = contents.size() - 1;
-            String lastContent = getContent(lastContentIndex);
-            if (lastContent.equals("")) {
-                contents.remove(lastContentIndex);
-            } else {
-                contents.remove(lastContentIndex);
-                contents.add(lastContent);
-            }
             dispatchTakePictureIntent();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
@@ -253,18 +295,30 @@ public class NoteActivity extends AppCompatActivity {
     }
 
     public void clearNote() {
-        etTitle.setText("");
+        etTitle.setText(BLANC_ENTRY);
         contents.clear();
-        contents.add("");
+        contents.add(BLANC_ENTRY);
         contentsAdapter.notifyDataSetChanged();
     }
 
     public void deleteNote() {
-        int id = getNoteId();
-        noteDbHelper.deleteNote(id);
-        clearNote();
+        final int id = getNoteId();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Note note = noteDao.getById(id);
+                noteDao.delete(note);
+            }
+        }).start();
         makeText(this, "Заметка успешно удалена", LENGTH_SHORT).show();
         finish();
+    }
+
+    public void addRec() {
+        if (contents.get(contents.size() - 1).contains("jpg")) {
+            contents.add(BLANC_ENTRY);
+            contentsAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -282,16 +336,29 @@ public class NoteActivity extends AppCompatActivity {
             case R.id.delete:
                 deleteNote();
                 break;
+            case R.id.rec:
+                addRec();
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
 
     public void openImage(int position) {
-        String content = contents.get(position);
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.parse("file://" + content), "image/*");
-        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            String localUri = contents.get(position);
+            File file = new File(localUri);
+            Uri contentUri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", file);
+            Intent openFileIntent = new Intent(Intent.ACTION_VIEW);
+            openFileIntent.setDataAndTypeAndNormalize(contentUri, "image/*");
+            openFileIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(openFileIntent);
+        } else {
+            String content = contents.get(position);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(Uri.parse("file://" + content), "image/*");
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+        }
     }
 
     @Override

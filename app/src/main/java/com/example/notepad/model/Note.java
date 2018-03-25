@@ -1,10 +1,17 @@
 package com.example.notepad.model;
 
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.TypeConverters;
+
 import java.util.List;
 
+@Entity
 public class Note {
+    @PrimaryKey(autoGenerate = true)
     private int id;
     private String title;
+    @TypeConverters({ContentsConverter.class})
     private List<String> contents;
     private String time;
 

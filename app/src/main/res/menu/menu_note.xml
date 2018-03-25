@@ -18,6 +18,13 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/rec"
+        android:icon="@drawable/ic_edit_black_24dp"
+        android:orderInCategory="100"
+        android:title="Edit"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/clear"
         android:icon="@drawable/ic_clear_black_24dp"
         android:orderInCategory="100"

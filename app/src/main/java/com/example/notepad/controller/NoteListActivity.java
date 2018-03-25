@@ -1,7 +1,11 @@
 package com.example.notepad.controller;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.persistence.room.Room;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -10,19 +14,18 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
-import com.example.notepad.managers.App;
-import com.example.notepad.utils.LoadListener;
-import com.example.notepad.utils.Loader;
+import com.example.notepad.model.AppDatabase;
+import com.example.notepad.model.NoteDao;
 import com.example.notepad.model.Note;
 import com.example.notepad.R;
 import com.example.notepad.adapter.MyAdapter;
 
 import java.util.List;
 
-public class NoteListActivity extends AppCompatActivity implements LoadListener {
+public class NoteListActivity extends AppCompatActivity {
 
     MyAdapter adapter;
-    Loader loader;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +54,6 @@ public class NoteListActivity extends AppCompatActivity implements LoadListener 
                 newNote();
             }
         });
-        loader = App.getLoader();
     }
 
     public void editNote(int noteId) {
@@ -66,26 +68,21 @@ public class NoteListActivity extends AppCompatActivity implements LoadListener 
     }
 
     public void setDataInAdapter() {
-        List<Note> notes = loader.getNotesFromDB();
-        adapter.setData(notes);
+        AppDatabase db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "database").allowMainThreadQueries().build();
+        NoteDao noteDao = db.noteDao();
+        LiveData<List<Note>> notesLiveData = noteDao.getAll();
+        notesLiveData.observe(this, new Observer<List<Note>>() {
+            @Override
+            public void onChanged(@Nullable List<Note> notes) {
+                adapter.setData(notes);
+            }
+        });
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        loader.addLoadListener(this);
         setDataInAdapter();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        loader.removeLoadListener(this);
-    }
-
-    @Override
-    public void onChangesSaved() {
-        List<Note> notes = loader.getNotesFromDB();
-        adapter.setData(notes);
     }
 }
