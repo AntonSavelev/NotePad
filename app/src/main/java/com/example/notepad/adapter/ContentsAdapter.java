@@ -21,6 +21,7 @@ public class ContentsAdapter extends RecyclerView.Adapter {
 
     public static final int TYPE_IMAGE = 0;
     public static final int TYPE_EDIT_TEXT = 1;
+    
     Listener listener;
     private List<String> contents;
 
