@@ -4,6 +4,8 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 import android.arch.persistence.room.TypeConverters;
 
+import com.example.notepad.Record;
+
 import java.util.List;
 
 @Entity
@@ -12,10 +14,10 @@ public class Note {
     private int id;
     private String title;
     @TypeConverters({ContentsConverter.class})
-    private List<String> contents;
+    private List<Record> contents;
     private String time;
 
-    public Note(String title, List<String> contents, String time) {
+    public Note(String title, List<Record> contents, String time) {
         this.title = title;
         this.contents = contents;
         this.time = time;
@@ -37,7 +39,7 @@ public class Note {
         this.title = title;
     }
 
-    public List<String> getContents() {
+    public List<Record> getContents() {
         return contents;
     }
 

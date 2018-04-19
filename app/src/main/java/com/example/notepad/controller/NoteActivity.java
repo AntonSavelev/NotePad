@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -21,6 +22,9 @@ import android.widget.EditText;
 import android.support.v7.widget.ShareActionProvider;
 import android.widget.Toast;
 
+import com.example.notepad.ImageRecord;
+import com.example.notepad.Record;
+import com.example.notepad.TextRecord;
 import com.example.notepad.model.AppDatabase;
 import com.example.notepad.model.NoteDao;
 import com.example.notepad.adapter.ContentsAdapter;
@@ -45,7 +49,7 @@ public class NoteActivity extends AppCompatActivity {
     public static final String BLANC_ENTRY = "";
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private NoteDao noteDao;
-    private List<String> contents;
+    private List<Record> contents;
     private String content;
     private ContentsAdapter contentsAdapter;
     private RecyclerView rv;
@@ -62,20 +66,20 @@ public class NoteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         initialization();
-        if (savedInstanceState != null) {
-            contents = savedInstanceState.getStringArrayList(KEY_SAVE_CONTENTS);
-        }
+//        if (savedInstanceState != null) {
+//            contents = savedInstanceState.getStringArrayList(KEY_SAVE_CONTENTS);
+//        }
         if (isIntentHasExtra()) {
             getNote();
         }
         contentsAdapter.setData(contents);
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putStringArrayList(KEY_SAVE_CONTENTS, (ArrayList<String>) contents);
-    }
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        super.onSaveInstanceState(outState);
+//        outState.putStringArrayList(KEY_SAVE_CONTENTS, (ArrayList<String>) contents);
+//    }
 
     public void initialization() {
         etTitle = findViewById(R.id.et_title);
@@ -125,7 +129,7 @@ public class NoteActivity extends AppCompatActivity {
 
     public boolean isNoteEdit() {
         String savedTitle = note.getTitle();
-        List<String> savedListContents = note.getContents();
+        List<Record> savedListContents = note.getContents();
         String title = etTitle.getText().toString();
         if (savedTitle.equals(title) && savedListContents.equals(contents)) {
             return false;
@@ -136,7 +140,8 @@ public class NoteActivity extends AppCompatActivity {
     public boolean isFieldsEmpty() {
         String title = etTitle.getText().toString();
         int contentsSize = contents.size();
-        if (!contents.get(0).contains("jpg")) {
+
+        if (contents.get(0).getClass() != ImageRecord.class) {
             String content = getContent(0);
             if (title.equals("") && contentsSize == 1 && content.equals("")) {
                 return true;
@@ -185,7 +190,7 @@ public class NoteActivity extends AppCompatActivity {
         );
         sourceUri = Uri.fromFile(image);
         destinationUri = sourceUri;
-        content = image.getAbsolutePath();
+        content = image.getAbsolutePath();// тут
         return image;
     }
 
@@ -224,7 +229,9 @@ public class NoteActivity extends AppCompatActivity {
                 if (size > 0 && contents.get(size - 1).equals("")) {
                     contents.remove(contents.size() - 1);
                 }
-                contents.add(content);
+                ImageRecord imageRecord = new ImageRecord();
+                imageRecord.setPhotoUrl(content);
+                contents.add(imageRecord);
                 contentsAdapter.notifyDataSetChanged();
             }
         }
@@ -285,10 +292,19 @@ public class NoteActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            dispatchTakePictureIntent();
+        }
+    }
+
     public void clearNote() {
         etTitle.setText(BLANC_ENTRY);
         contents.clear();
-        contents.add(BLANC_ENTRY);
+        TextRecord textRecord = new TextRecord("");
+        contents.add(textRecord);
         contentsAdapter.notifyDataSetChanged();
     }
 
@@ -306,8 +322,9 @@ public class NoteActivity extends AppCompatActivity {
     }
 
     public void addRec() {
-        if (contents.get(contents.size() - 1).contains("jpg")) {
-            contents.add(BLANC_ENTRY);
+        if (contents.get(contents.size() - 1).getClass() == ImageRecord.class) {
+            TextRecord textRecord = new TextRecord("");
+            contents.add(textRecord);
             contentsAdapter.notifyDataSetChanged();
         }
     }
@@ -336,7 +353,8 @@ public class NoteActivity extends AppCompatActivity {
 
     public void openImage(int position) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            String localUri = contents.get(position);
+            ImageRecord imageRecord = (ImageRecord) contents.get(position);
+            String localUri = imageRecord.getPhotoUrl();
             File file = new File(localUri);
             Uri contentUri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", file);
             Intent openFileIntent = new Intent(Intent.ACTION_VIEW);
@@ -344,7 +362,8 @@ public class NoteActivity extends AppCompatActivity {
             openFileIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(openFileIntent);
         } else {
-            String content = contents.get(position);
+            ImageRecord imageRecord = (ImageRecord) contents.get(position);
+            String content = imageRecord.getPhotoUrl();
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(Uri.parse("file://" + content), "image/*");
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

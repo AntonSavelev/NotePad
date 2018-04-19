@@ -11,7 +11,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.example.notepad.ImageRecord;
 import com.example.notepad.R;
+import com.example.notepad.Record;
+import com.example.notepad.TextRecord;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +26,7 @@ public class ContentsAdapter extends RecyclerView.Adapter {
     public static final int TYPE_EDIT_TEXT = 1;
 
     Listener listener;
-    private List<String> contents;
+    private List<Record> contents;
 
     public ContentsAdapter() {
         this.contents = Collections.EMPTY_LIST;
@@ -63,18 +66,18 @@ public class ContentsAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemViewType(int position) {
-        if (contents.get(position).contains(".jpg")) {
+        if (contents.get(position).getClass() == ImageRecord.class) {
             return TYPE_IMAGE;
         } else {
             return TYPE_EDIT_TEXT;
         }
     }
 
-    public void setData(List<String> contents) {
+    public void setData(List<Record> contents) {
         this.contents = contents;
 
         if (getItemCount() == 0) {
-            contents.add("");
+            contents.add(new TextRecord(""));
         }
 
     }
@@ -96,7 +99,8 @@ public class ContentsAdapter extends RecyclerView.Adapter {
         }
 
         public void bind(RecyclerView.ViewHolder holder, final int position) {
-            Uri uri = Uri.parse(contents.get(position));
+            ImageRecord imageRecord = (ImageRecord) contents.get(position);
+            Uri uri = Uri.parse(imageRecord.getPhotoUrl());
             ((ImageViewHolder) holder).image.setImageURI(uri);
             CardView cardView = (CardView) holder.itemView;
             cardView.setOnClickListener(new View.OnClickListener() {
@@ -122,7 +126,8 @@ public class ContentsAdapter extends RecyclerView.Adapter {
         }
 
         public void bind(RecyclerView.ViewHolder holder, final int position) {
-            String content = contents.get(position);
+            TextRecord textRecord = (TextRecord) contents.get(position);
+            String content = textRecord.getTextRec();
             ((EditTextViewHolder) holder).eText.setText(content);
             ((EditTextViewHolder) holder).eText.requestFocus();
         }
@@ -142,7 +147,8 @@ public class ContentsAdapter extends RecyclerView.Adapter {
 
         @Override
         public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            contents.set(position, charSequence.toString());
+            TextRecord textRecord = new TextRecord(charSequence.toString());
+            contents.set(position, textRecord);
         }
 
         @Override
