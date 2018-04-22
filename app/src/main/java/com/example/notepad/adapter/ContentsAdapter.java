@@ -11,10 +11,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import com.example.notepad.ImageRecord;
+import com.example.notepad.model.ImageRecord;
 import com.example.notepad.R;
-import com.example.notepad.Record;
-import com.example.notepad.TextRecord;
+import com.example.notepad.model.Record;
+import com.example.notepad.model.TextRecord;
 
 import java.util.Collections;
 import java.util.List;
@@ -66,10 +66,10 @@ public class ContentsAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemViewType(int position) {
-        if (contents.get(position).getClass() == ImageRecord.class) {
-            return TYPE_IMAGE;
-        } else {
+        if (contents.get(position) instanceof TextRecord) {
             return TYPE_EDIT_TEXT;
+        } else {
+            return TYPE_IMAGE;
         }
     }
 

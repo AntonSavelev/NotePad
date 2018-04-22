@@ -1,6 +1,9 @@
 package com.example.notepad.controller;
 
 import android.Manifest;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -8,6 +11,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -22,9 +26,10 @@ import android.widget.EditText;
 import android.support.v7.widget.ShareActionProvider;
 import android.widget.Toast;
 
-import com.example.notepad.ImageRecord;
-import com.example.notepad.Record;
-import com.example.notepad.TextRecord;
+import com.example.notepad.model.ImageRecord;
+import com.example.notepad.model.Record;
+import com.example.notepad.model.RecordViewModel;
+import com.example.notepad.model.TextRecord;
 import com.example.notepad.model.AppDatabase;
 import com.example.notepad.model.NoteDao;
 import com.example.notepad.adapter.ContentsAdapter;
@@ -47,7 +52,7 @@ public class NoteActivity extends AppCompatActivity {
     public static final String KEY_NOTE_ID = "key_id";
     public static final String KEY_SAVE_CONTENTS = "key_save_contents";
     public static final String BLANC_ENTRY = "";
-    static final int REQUEST_IMAGE_CAPTURE = 1;
+    public static final int REQUEST_IMAGE_CAPTURE = 1;
     private NoteDao noteDao;
     private List<Record> contents;
     private String content;
@@ -102,20 +107,19 @@ public class NoteActivity extends AppCompatActivity {
 
     public void getNote() {
         final int id = getNoteId();
-        new Thread(new Runnable() {
+        RecordViewModel model = ViewModelProviders.of(NoteActivity.this).get(RecordViewModel.class);
+        LiveData<Note> noteLiveData = model.getData(id);
+        noteLiveData.observe(this, new Observer<Note>() {
             @Override
-            public void run() {
-                note = noteDao.getById(id);
+            public void onChanged(@Nullable Note currentNote) {
+                if (note == null) {
+                    note = currentNote;
+                }
                 contents.clear();
-                contents.addAll(note.getContents());
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        etTitle.setText(note.getTitle());
-                    }
-                });
+                contents.addAll(currentNote.getContents());
+                etTitle.setText(currentNote.getTitle());
             }
-        }).start();
+        });
     }
 
     public boolean isIntentHasExtra() {
@@ -140,8 +144,7 @@ public class NoteActivity extends AppCompatActivity {
     public boolean isFieldsEmpty() {
         String title = etTitle.getText().toString();
         int contentsSize = contents.size();
-
-        if (contents.get(0).getClass() != ImageRecord.class) {
+        if (!(contents.get(0) instanceof ImageRecord)) {
             String content = getContent(0);
             if (title.equals("") && contentsSize == 1 && content.equals("")) {
                 return true;
@@ -175,8 +178,7 @@ public class NoteActivity extends AppCompatActivity {
 
     public int getNoteId() {
         Intent intent = getIntent();
-        int id = intent.getIntExtra(KEY_NOTE_ID, 0);
-        return id;
+        return intent.getIntExtra(KEY_NOTE_ID, 0);
     }
 
     private File createImageFile() throws IOException {
@@ -190,7 +192,7 @@ public class NoteActivity extends AppCompatActivity {
         );
         sourceUri = Uri.fromFile(image);
         destinationUri = sourceUri;
-        content = image.getAbsolutePath();// тут
+        content = image.getAbsolutePath();
         return image;
     }
 
@@ -226,8 +228,11 @@ public class NoteActivity extends AppCompatActivity {
         if (requestCode == UCrop.REQUEST_CROP) {
             if (resultCode == RESULT_OK) {
                 int size = contents.size();
-                if (size > 0 && contents.get(size - 1).equals("")) {
-                    contents.remove(contents.size() - 1);
+                if (size > 0 && contents.get(size - 1) instanceof TextRecord) {
+                    TextRecord textRecord = (TextRecord) contents.get(size - 1);
+                    if (textRecord.getTextRec().equals("")) {
+                        contents.remove(contents.size() - 1);
+                    }
                 }
                 ImageRecord imageRecord = new ImageRecord();
                 imageRecord.setPhotoUrl(content);
@@ -313,7 +318,7 @@ public class NoteActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Note note = noteDao.getById(id);
+                Note note = noteDao.getNoteById(id);
                 noteDao.delete(note);
             }
         }).start();
