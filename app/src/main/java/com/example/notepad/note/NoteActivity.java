@@ -137,13 +137,6 @@ public class NoteActivity extends AppCompatActivity {
         }
     }
 
-    public void setNoteChangedRecords() {
-        note.setId(id);
-        note.setContents(contents);
-        note.setTitle(etTitle.getText().toString());
-        note.setTime(getDate());
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_note, menu);
@@ -160,6 +153,13 @@ public class NoteActivity extends AppCompatActivity {
     public int getNoteId() {
         Intent intent = getIntent();
         return intent.getIntExtra(KEY_NOTE_ID, 0);
+    }
+
+    public void setNoteChangedRecords() {
+        note.setId(id);
+        note.setContents(contents);
+        note.setTitle(etTitle.getText().toString());
+        note.setTime(getDate());
     }
 
     private File createImageFile() throws IOException {

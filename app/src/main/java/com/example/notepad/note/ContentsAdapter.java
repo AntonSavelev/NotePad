@@ -1,4 +1,4 @@
-package com.example.notepad.adapter;
+package com.example.notepad.note;
 
 import android.net.Uri;
 import android.support.v7.widget.CardView;
@@ -79,11 +79,12 @@ public class ContentsAdapter extends RecyclerView.Adapter {
         if (getItemCount() == 0) {
             contents.add(new TextRecord(""));
         }
-
     }
 
     public interface Listener {
         void onClick(int position);
+
+        void onChange();
     }
 
     public class ImageViewHolder extends RecyclerView.ViewHolder {
@@ -95,7 +96,6 @@ public class ContentsAdapter extends RecyclerView.Adapter {
             super(itemView);
             cardView = itemView;
             image = cardView.findViewById(R.id.image);
-
         }
 
         public void bind(RecyclerView.ViewHolder holder, final int position) {
@@ -149,11 +149,11 @@ public class ContentsAdapter extends RecyclerView.Adapter {
         public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
             TextRecord textRecord = new TextRecord(charSequence.toString());
             contents.set(position, textRecord);
+            listener.onChange();
         }
 
         @Override
         public void afterTextChanged(Editable editable) {
         }
     }
-
 }

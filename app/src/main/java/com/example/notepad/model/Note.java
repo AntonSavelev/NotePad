@@ -5,6 +5,7 @@ import android.arch.persistence.room.PrimaryKey;
 import android.arch.persistence.room.TypeConverters;
 
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 public class Note {
@@ -41,11 +42,29 @@ public class Note {
         return contents;
     }
 
+    public void setContents(List<Record> contents) {
+        this.contents = contents;
+    }
+
     public String getTime() {
         return time;
     }
 
     public void setTime(String time) {
         this.time = time;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Note note = (Note) o;
+        return id == note.id &&
+                Objects.equals(contents, note.contents);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, contents);
     }
 }

@@ -1,16 +1,15 @@
-package com.example.notepad.controller;
+package com.example.notepad.noteList;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
-import android.arch.persistence.room.Room;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
@@ -19,13 +18,13 @@ import com.example.notepad.model.AppDatabase;
 import com.example.notepad.model.NoteDao;
 import com.example.notepad.model.Note;
 import com.example.notepad.R;
-import com.example.notepad.adapter.MyAdapter;
+import com.example.notepad.note.NoteActivity;
 
 import java.util.List;
 
 public class NoteListActivity extends AppCompatActivity {
 
-    MyAdapter adapter;
+    NoteListAdapter adapter;
     AppDatabase db = App.getInstance().getDatabase();
 
     @Override
@@ -36,10 +35,10 @@ public class NoteListActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         RecyclerView recyclerView = findViewById(R.id.r_view);
-        final GridLayoutManager layoutManager = new GridLayoutManager(NoteListActivity.this, 1);
+        final StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new MyAdapter();
-        adapter.setListener(new MyAdapter.Listener() {
+        adapter = new NoteListAdapter();
+        adapter.setListener(new NoteListAdapter.Listener() {
             @Override
             public void onClick(int noteId) {
                 editNote(noteId);
@@ -77,7 +76,6 @@ public class NoteListActivity extends AppCompatActivity {
                 adapter.setData(notes);
             }
         });
-
     }
 
     @Override

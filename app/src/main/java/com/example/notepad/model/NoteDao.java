@@ -25,7 +25,7 @@ public interface NoteDao {
     Note getNoteById(int id);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(Note note);
+    long insert(Note note);
 
     @Update
     void update(Note note);

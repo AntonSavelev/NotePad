@@ -9,11 +9,6 @@ public class ImageRecord implements Record {
     public ImageRecord() {
     }
 
-    public ImageRecord(String mPhotoUrl) {
-
-        this.mPhotoUrl = mPhotoUrl;
-    }
-
     public String getPhotoUrl() {
         return mPhotoUrl;
     }
@@ -32,7 +27,6 @@ public class ImageRecord implements Record {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(mPhotoUrl);
     }
 }

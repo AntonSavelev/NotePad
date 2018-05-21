@@ -1,14 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.notepad.controller.NoteActivity">
-
-    <item
-        android:id="@+id/save"
-        android:icon="@drawable/ic_done_black_24dp"
-        android:orderInCategory="100"
-        android:title="@string/action_save"
-        app:showAsAction="always" />
+    tools:context="com.example.notepad.note.NoteActivity">
 
     <item
         android:id="@+id/camera"
@@ -39,7 +32,7 @@
         app:showAsAction="always" />
 
     <!--<item android:id="@+id/action_share"-->
-        <!--android:title="Share"-->
-        <!--app:showAsAction="ifRoom"-->
-        <!--app:actionProviderClass="android.support.v7.widget.ShareActionProvider"/>-->
+    <!--android:title="Share"-->
+    <!--app:showAsAction="ifRoom"-->
+    <!--app:actionProviderClass="android.support.v7.widget.ShareActionProvider"/>-->
 </menu>
