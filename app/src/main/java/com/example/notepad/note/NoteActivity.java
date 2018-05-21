@@ -1,4 +1,4 @@
-package com.example.notepad.controller;
+package com.example.notepad.note;
 
 import android.Manifest;
 import android.arch.lifecycle.LiveData;
@@ -18,12 +18,11 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
-import android.support.v7.widget.ShareActionProvider;
 import android.widget.Toast;
 
 import com.example.notepad.model.ImageRecord;
@@ -32,7 +31,6 @@ import com.example.notepad.model.RecordViewModel;
 import com.example.notepad.model.TextRecord;
 import com.example.notepad.model.AppDatabase;
 import com.example.notepad.model.NoteDao;
-import com.example.notepad.adapter.ContentsAdapter;
 import com.example.notepad.managers.App;
 import com.example.notepad.model.Note;
 import com.example.notepad.R;
@@ -42,17 +40,25 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static android.widget.Toast.*;
 
 public class NoteActivity extends AppCompatActivity {
 
     public static final String KEY_NOTE_ID = "key_id";
-    public static final String KEY_SAVE_CONTENTS = "key_save_contents";
     public static final String BLANC_ENTRY = "";
     public static final int REQUEST_IMAGE_CAPTURE = 1;
+    private int noteId = 0;
+    private int id = 0;
+    private LiveData<Note> noteLiveData;
     private NoteDao noteDao;
     private List<Record> contents;
     private String content;
@@ -61,8 +67,7 @@ public class NoteActivity extends AppCompatActivity {
     private EditText etTitle;
     private Uri sourceUri;
     private Uri destinationUri;
-    private ShareActionProvider myShareActionProvider;
-    private GridLayoutManager layoutManager;
+    private RecyclerView.LayoutManager layoutManager;
     private AppDatabase db;
     private Note note;
 
@@ -71,53 +76,54 @@ public class NoteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         initialization();
-//        if (savedInstanceState != null) {
-//            contents = savedInstanceState.getStringArrayList(KEY_SAVE_CONTENTS);
-//        }
         if (isIntentHasExtra()) {
+            id = getNoteId();
+            getNote();
+        } else {
+            newNote();
+            id = noteId;
             getNote();
         }
-        contentsAdapter.setData(contents);
-    }
-
-//    @Override
-//    protected void onSaveInstanceState(Bundle outState) {
-//        super.onSaveInstanceState(outState);
-//        outState.putStringArrayList(KEY_SAVE_CONTENTS, (ArrayList<String>) contents);
-//    }
-
-    public void initialization() {
-        etTitle = findViewById(R.id.et_title);
-        db = App.getInstance().getDatabase();
-        noteDao = db.noteDao();
-        rv = findViewById(R.id.note_view);
-        layoutManager = new GridLayoutManager(NoteActivity.this, 1);
-        rv.setLayoutManager(layoutManager);
-        rv.setItemAnimator(new DefaultItemAnimator());
-        contentsAdapter = new ContentsAdapter();
         contentsAdapter.setListener(new ContentsAdapter.Listener() {
             @Override
             public void onClick(int position) {
                 openImage(position);
             }
+
+            @Override
+            public void onChange() {
+                if (id != 0 && note != null) {
+                    setNoteChangedRecords();
+                    updateNote(note);
+                }
+            }
         });
         rv.setAdapter(contentsAdapter);
+        contentsAdapter.setData(contents);
+    }
+
+    public void initialization() {
+        etTitle = findViewById(R.id.et_title);
         contents = new ArrayList<>();
+        db = App.getInstance().getDatabase();
+        noteDao = db.noteDao();
+        rv = findViewById(R.id.note_view);
+        layoutManager = new LinearLayoutManager(this);
+        rv.setLayoutManager(layoutManager);
+        rv.setItemAnimator(new DefaultItemAnimator());
+        contentsAdapter = new ContentsAdapter();
     }
 
     public void getNote() {
-        final int id = getNoteId();
         RecordViewModel model = ViewModelProviders.of(NoteActivity.this).get(RecordViewModel.class);
-        LiveData<Note> noteLiveData = model.getData(id);
+        noteLiveData = model.getData(id);
         noteLiveData.observe(this, new Observer<Note>() {
             @Override
             public void onChanged(@Nullable Note currentNote) {
-                if (note == null) {
-                    note = currentNote;
-                }
+                note = currentNote;
                 contents.clear();
-                contents.addAll(currentNote.getContents());
-                etTitle.setText(currentNote.getTitle());
+                contents.addAll(note.getContents());
+                etTitle.setText(note.getTitle());
             }
         });
     }
@@ -131,26 +137,11 @@ public class NoteActivity extends AppCompatActivity {
         }
     }
 
-    public boolean isNoteEdit() {
-        String savedTitle = note.getTitle();
-        List<Record> savedListContents = note.getContents();
-        String title = etTitle.getText().toString();
-        if (savedTitle.equals(title) && savedListContents.equals(contents)) {
-            return false;
-        }
-        return true;
-    }
-
-    public boolean isFieldsEmpty() {
-        String title = etTitle.getText().toString();
-        int contentsSize = contents.size();
-        if (!(contents.get(0) instanceof ImageRecord)) {
-            String content = getContent(0);
-            if (title.equals("") && contentsSize == 1 && content.equals("")) {
-                return true;
-            }
-        }
-        return false;
+    public void setNoteChangedRecords() {
+        note.setId(id);
+        note.setContents(contents);
+        note.setTitle(etTitle.getText().toString());
+        note.setTime(getDate());
     }
 
     @Override
@@ -158,22 +149,12 @@ public class NoteActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_note, menu);
         MenuItem deleteItem = menu.findItem(R.id.delete);
         MenuItem clearItem = menu.findItem(R.id.clear);
-//        MenuItem shareItem = menu.findItem(R.id.action_share);
         if (!isIntentHasExtra()) {
             deleteItem.setVisible(false);
-//            shareItem.setVisible(false);
         } else {
             clearItem.setVisible(false);
         }
-//        myShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
         return true;
-    }
-
-    private void setIntent(String shareContent) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TEXT, shareContent);
-        myShareActionProvider.setShareIntent(intent);
     }
 
     public int getNoteId() {
@@ -228,7 +209,7 @@ public class NoteActivity extends AppCompatActivity {
         if (requestCode == UCrop.REQUEST_CROP) {
             if (resultCode == RESULT_OK) {
                 int size = contents.size();
-                if (size > 0 && contents.get(size - 1) instanceof TextRecord) {
+                if (size > 1 && contents.get(size - 1) instanceof TextRecord) {
                     TextRecord textRecord = (TextRecord) contents.get(size - 1);
                     if (textRecord.getTextRec().equals("")) {
                         contents.remove(contents.size() - 1);
@@ -237,54 +218,47 @@ public class NoteActivity extends AppCompatActivity {
                 ImageRecord imageRecord = new ImageRecord();
                 imageRecord.setPhotoUrl(content);
                 contents.add(imageRecord);
+                updateNote(note);
                 contentsAdapter.notifyDataSetChanged();
             }
         }
     }
 
-    public String getContent(int contentIndex) {
-        EditText editText = rv.getChildAt(contentIndex).findViewById(R.id.eText);
-        String lastContent = editText.getText().toString();
-        return lastContent;
-    }
-
     public void insertNote(final Note note) {
-        new Thread(new Runnable() {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        Future<Integer> result = es.submit(new Callable<Integer>() {
             @Override
-            public void run() {
-                noteDao.insert(note);
+            public Integer call() throws Exception {
+                return (int) noteDao.insert(note);
             }
-        }).start();
-        makeText(this, "Заметка успешно сохранена", LENGTH_SHORT).show();
+        });
+        try {
+            noteId = result.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     public void updateNote(final Note note) {
-        note.setId(getNoteId());
         new Thread(new Runnable() {
             @Override
             public void run() {
                 noteDao.update(note);
             }
         }).start();
-        makeText(this, "Заметка отредактирована", LENGTH_SHORT).show();
     }
 
-    public void saveNote() {
-        if (isFieldsEmpty()) {
-            return;
-        }
-        String title = etTitle.getText().toString();
+    public void newNote() {
+        note = new Note("", Collections.EMPTY_LIST, getDate());
+        insertNote(note);
+    }
+
+    public String getDate() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyy HH:mm:ss");
         String currentDateAndTime = sdf.format(new Date());
-        final Note note = new Note(title, contents, currentDateAndTime);
-        if (isIntentHasExtra()) {
-            if (isNoteEdit()) {
-                updateNote(note);
-            }
-        } else {
-            insertNote(note);
-        }
-        finish();
+        return currentDateAndTime;
     }
 
     public void checkPermissionAndGetPhoto() {
@@ -314,7 +288,6 @@ public class NoteActivity extends AppCompatActivity {
     }
 
     public void deleteNote() {
-        final int id = getNoteId();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -322,7 +295,7 @@ public class NoteActivity extends AppCompatActivity {
                 noteDao.delete(note);
             }
         }).start();
-        makeText(this, "Заметка успешно удалена", LENGTH_SHORT).show();
+        noteLiveData.removeObservers(this);
         finish();
     }
 
@@ -339,9 +312,6 @@ public class NoteActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.camera:
                 checkPermissionAndGetPhoto();
-                break;
-            case R.id.save:
-                saveNote();
                 break;
             case R.id.clear:
                 clearNote();
@@ -376,9 +346,20 @@ public class NoteActivity extends AppCompatActivity {
         }
     }
 
+    public Note createCleanNote() {
+        List<Record> records = new ArrayList<>();
+        records.add(new TextRecord(""));
+        Note cleanNote = new Note("", records, getDate());
+        cleanNote.setId(id);
+        return cleanNote;
+    }
+
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        saveNote();
+        setNoteChangedRecords();
+        if (note.equals(createCleanNote())) {
+            deleteNote();
+        }
     }
 }
